@@ -1,18 +1,32 @@
 # Dependencies
 node_modules/
-/.pnp
-.pnp.js
+.yarn/
+.pnp
 
-# Environment variables
+# Testing
+.nyc_output
+coverage
+
+# Production
+build/
+dist/
+.expo/
+.next/
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnp.js
 .env
 .env.local
-.env.*.local
-
-# Build outputs
-/dist
-/build
-*.js.map
-*.d.ts.map
+.env.development.local
+.env.test.local
+.env.production.local
 
 # IDE
 .vscode/
@@ -20,50 +34,30 @@ node_modules/
 *.swp
 *.swo
 *~
-.DS_Store
+.project
+.classpath
+*.c9/
+*.sock
 
-# Testing
-/coverage
-.nyc_output
+# OS
+Thumbs.db
+.AppleDouble
+.LSOverride
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
 
 # Logs
 logs/
 *.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
 
-# Expo
-.expo/
-.expo-shared/
-dist/
-npm-debug.*
-yarn-debug.*
-yarn-error.*
-*.jks
-*.p8
-*.p12
-*.key
-*.mobileprovision
-*.orig.*
-web-build/
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
 
-# OS
-Thumbs.db
-.DS_Store
-
-# Sensitive data
+# Certificates
+*.crt
 *.key
 *.pem
-*.p12
-*.pfx
-secrets/
-
-# Database
-*.db
-*.sqlite
-*.sqlite3
-
-# Cache
-.cache/
-.eslintcache
