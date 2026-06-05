@@ -1,91 +1,89 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
+import rateLimit from 'express-rate-limit';
+import { AppError } from '@types/index';
 
-interface AuthenticatedRequest extends Request {
-  user?: { id: string; phone: string };
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
+
+/**
+ * Extend Express Request to include user and token info
+ */
+declare global {
+  namespace Express {
+    interface Request {
+      userId?: string;
+      token?: string;
+    }
+  }
 }
 
 /**
- * Middleware to verify JWT token
+ * Verify JWT token middleware
  */
-export const authenticateToken = (
-  req: AuthenticatedRequest,
-  res: Response,
-  next: NextFunction
-): void => {
-  const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1]; // Bearer TOKEN
-
-  if (!token) {
-    res.status(401).json({
-      success: false,
-      error: 'Access token required',
-    });
-    return;
-  }
-
+export const verifyToken = (req: Request, res: Response, next: NextFunction): void => {
   try {
-    const decoded = jwt.verify(
-      token,
-      process.env.JWT_SECRET || 'secret'
-    ) as { id: string; phone: string };
-    req.user = decoded;
+    const authHeader = req.headers.authorization;
+    const token = authHeader?.split(' ')[1];
+
+    if (!token) {
+      throw new AppError('AUTH_001', 401, 'No token provided');
+    }
+
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string; iat: number };
+    req.userId = decoded.userId;
+    req.token = token;
     next();
-  } catch (error) {
-    res.status(403).json({
+  } catch (error: any) {
+    res.status(error.statusCode || 401).json({
       success: false,
-      error: 'Invalid or expired token',
+      error: error.message || 'Invalid token',
     });
   }
 };
 
 /**
- * Middleware for input validation
+ * Validate input middleware
  */
-export const validateInput = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): void => {
-  // Sanitize inputs to prevent injection attacks
-  if (req.body) {
-    Object.keys(req.body).forEach((key) => {
-      const value = req.body[key];
-      if (typeof value === 'string') {
-        req.body[key] = value.trim();
-      }
+export const validateInput = (req: Request, res: Response, next: NextFunction): void => {
+  // Check if body is too large or suspicious
+  if (req.body && Object.keys(req.body).length > 50) {
+    return res.status(400).json({
+      success: false,
+      error: 'Request body too large',
     });
   }
   next();
 };
 
 /**
- * Middleware for rate limiting
+ * Rate limiting middleware
  */
-const requestCounts: Map<string, { count: number; resetTime: number }> = new Map();
+export const rateLimitMiddleware = rateLimit({
+  windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000'),
+  max: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '100'),
+  message: 'Too many requests from this IP, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-export const rateLimit = (windowMs: number = 900000, maxRequests: number = 100) => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const ip = req.ip || 'unknown';
-    const now = Date.now();
+/**
+ * Error handling middleware
+ */
+export const errorHandler = (err: any, req: Request, res: Response, _next: NextFunction): void => {
+  console.error('Error:', err);
+  const statusCode = err.statusCode || 500;
+  const message = err.message || 'Internal server error';
 
-    let record = requestCounts.get(ip);
+  res.status(statusCode).json({
+    success: false,
+    error: message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+};
 
-    if (!record || now > record.resetTime) {
-      record = { count: 0, resetTime: now + windowMs };
-      requestCounts.set(ip, record);
-    }
-
-    record.count++;
-
-    if (record.count > maxRequests) {
-      res.status(429).json({
-        success: false,
-        error: 'Too many requests. Please try again later.',
-      });
-      return;
-    }
-
-    next();
-  };
+/**
+ * Generate JWT token
+ */
+export const generateToken = (userId: string, expiresIn: string = '1h'): string => {
+  return jwt.sign({ userId }, JWT_SECRET, { expiresIn });
 };

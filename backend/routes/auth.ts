@@ -1,188 +1,186 @@
-import express, { Router, Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
-import bcryptjs from 'bcryptjs';
+import { Router, Request, Response } from 'express';
+import { verifyToken } from '../middleware/authentication';
+import { loginSchema, registerSchema } from '@constants/validation';
+import { AppError } from '@types/index';
 
-const router: Router = express.Router();
-
-interface AuthRequest extends Request {
-  user?: { id: string; phone: string };
-}
+const router = Router();
 
 /**
- * POST /auth/register
- * Register a new user
+ * POST /api/auth/login
+ * Login user with phone and password
  */
-router.post('/register', async (req: AuthRequest, res: Response) => {
+router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { phone, firstName, lastName, email, pin } = req.body;
+    const { phone, password } = req.body;
 
     // Validate input
-    if (!phone || !firstName || !lastName || !pin) {
+    const validation = loginSchema.safeParse({ phone, password });
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'Missing required fields',
+        error: 'Invalid input',
+        details: validation.error.errors,
       });
     }
 
-    // Validate phone format (10 digits for Côte d'Ivoire)
-    if (!/^[0-9]{10}$/.test(phone)) {
-      return res.status(400).json({
-        success: false,
-        error: 'Invalid phone number format',
-      });
-    }
+    // TODO: Implement actual authentication logic
+    // 1. Find user by phone
+    // 2. Verify password
+    // 3. Generate JWT tokens
+    // 4. Return user data with tokens
 
-    // Hash PIN
-    const hashedPin = await bcryptjs.hash(pin, 10);
+    res.json({
+      success: true,
+      message: 'Login endpoint - implementation pending',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
 
-    // Create user in database (placeholder)
-    const user = {
-      id: 'user-' + Date.now(),
+/**
+ * POST /api/auth/register
+ * Register new user
+ */
+router.post('/register', async (req: Request, res: Response) => {
+  try {
+    const { phone, firstName, lastName, email, password } = req.body;
+
+    // Validate input
+    const validation = registerSchema.safeParse({
       phone,
       firstName,
       lastName,
       email,
-      pinHash: hashedPin,
-      kycStatus: 'pending',
-      accountStatus: 'active',
-      createdAt: new Date(),
-    };
-
-    // Generate tokens
-    const token = jwt.sign(
-      { id: user.id, phone: user.phone },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1h' }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user.id, phone: user.phone },
-      process.env.JWT_REFRESH_SECRET || 'refresh-secret',
-      { expiresIn: '7d' }
-    );
-
-    res.status(201).json({
-      success: true,
-      data: {
-        user,
-        token,
-        refreshToken,
-      },
+      password,
     });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Registration failed',
-    });
-  }
-});
-
-/**
- * POST /auth/login
- * Login with phone and PIN
- */
-router.post('/login', async (req: AuthRequest, res: Response) => {
-  try {
-    const { phone, pin } = req.body;
-
-    if (!phone || !pin) {
+    if (!validation.success) {
       return res.status(400).json({
         success: false,
-        error: 'Phone and PIN required',
+        error: 'Invalid input',
+        details: validation.error.errors,
       });
     }
 
-    // Fetch user from database (placeholder)
-    // const user = await User.findOne({ phone });
-    const user = {
-      id: 'user-123',
-      phone,
-      firstName: 'Test',
-      lastName: 'User',
-      pinHash: await bcryptjs.hash(pin, 10),
-    };
-
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials',
-      });
-    }
-
-    // Verify PIN
-    const pinValid = await bcryptjs.compare(pin, user.pinHash);
-    if (!pinValid) {
-      return res.status(401).json({
-        success: false,
-        error: 'Invalid credentials',
-      });
-    }
-
-    // Generate tokens
-    const token = jwt.sign(
-      { id: user.id, phone: user.phone },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1h' }
-    );
-
-    const refreshToken = jwt.sign(
-      { id: user.id, phone: user.phone },
-      process.env.JWT_REFRESH_SECRET || 'refresh-secret',
-      { expiresIn: '7d' }
-    );
+    // TODO: Implement user registration logic
+    // 1. Check if user already exists
+    // 2. Hash password
+    // 3. Create user in database
+    // 4. Send verification SMS
+    // 5. Generate JWT tokens
 
     res.json({
       success: true,
-      data: {
-        user,
-        token,
-        refreshToken,
-      },
+      message: 'Register endpoint - implementation pending',
     });
-  } catch (error) {
-    console.error('Login error:', error);
+  } catch (error: any) {
     res.status(500).json({
       success: false,
-      error: 'Login failed',
+      error: error.message,
     });
   }
 });
 
 /**
- * POST /auth/refresh
+ * POST /api/auth/refresh
  * Refresh access token
  */
-router.post('/refresh', (req: AuthRequest, res: Response) => {
+router.post('/refresh', async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
     if (!refreshToken) {
-      return res.status(401).json({
+      return res.status(400).json({
         success: false,
-        error: 'Refresh token required',
+        error: 'Refresh token is required',
       });
     }
 
-    const decoded = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET || 'refresh-secret'
-    ) as { id: string; phone: string };
-
-    const newToken = jwt.sign(
-      { id: decoded.id, phone: decoded.phone },
-      process.env.JWT_SECRET || 'secret',
-      { expiresIn: '1h' }
-    );
+    // TODO: Implement token refresh logic
+    // 1. Verify refresh token
+    // 2. Generate new access token
+    // 3. Return new access token
 
     res.json({
       success: true,
-      data: { token: newToken },
+      message: 'Refresh endpoint - implementation pending',
     });
-  } catch (error) {
-    res.status(401).json({
+  } catch (error: any) {
+    res.status(500).json({
       success: false,
-      error: 'Invalid refresh token',
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/auth/biometric
+ * Authenticate using biometric data
+ */
+router.post('/biometric', async (req: Request, res: Response) => {
+  try {
+    const { phone, biometricData } = req.body;
+
+    // TODO: Implement biometric authentication
+    // 1. Verify biometric data format
+    // 2. Check against stored biometric template
+    // 3. Generate JWT tokens if authenticated
+
+    res.json({
+      success: true,
+      message: 'Biometric auth endpoint - implementation pending',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/auth/logout
+ * Logout user
+ */
+router.post('/logout', verifyToken, async (req: Request, res: Response) => {
+  try {
+    // TODO: Implement logout logic
+    // 1. Blacklist token
+    // 2. Clear session
+
+    res.json({
+      success: true,
+      message: 'User logged out successfully',
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/auth/profile
+ * Get current user profile
+ */
+router.get('/profile', verifyToken, async (req: Request, res: Response) => {
+  try {
+    // TODO: Fetch user profile from database
+    const userId = req.userId;
+
+    res.json({
+      success: true,
+      message: 'Profile endpoint - implementation pending',
+      data: { userId },
+    });
+  } catch (error: any) {
+    res.status(500).json({
+      success: false,
+      error: error.message,
     });
   }
 });
