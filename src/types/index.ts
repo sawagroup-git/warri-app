@@ -1,85 +1,127 @@
-/**
- * Core type definitions for Wari App
- */
-
+// User Types
 export interface User {
   id: string;
   phone: string;
+  email?: string;
   firstName: string;
   lastName: string;
-  email: string;
   avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  kycStatus: 'pending' | 'approved' | 'rejected';
-  accountStatus: 'active' | 'suspended' | 'closed';
+  kycStatus: 'pending' | 'verified' | 'rejected';
+  createdAt: string;
+  updatedAt: string;
 }
 
+export interface AuthUser extends User {
+  token: string;
+  refreshToken: string;
+}
+
+// Transaction Types
 export interface Transaction {
   id: string;
   senderId: string;
   recipientPhone: string;
+  recipientName?: string;
   amount: number;
-  provider: string;
+  currency: 'XOF' | 'USD' | 'EUR';
   fee: number;
-  totalAmount: number;
-  status: 'pending' | 'completed' | 'failed' | 'cancelled';
+  provider: MobileMoneyProvider;
+  status: TransactionStatus;
   reference: string;
-  notes?: string;
-  createdAt: Date;
-  completedAt?: Date;
-  failureReason?: string;
+  description?: string;
+  createdAt: string;
+  updatedAt: string;
+  completedAt?: string;
 }
 
+export type TransactionStatus = 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled';
+
+// Mobile Money Provider Types
+export type MobileMoneyProvider = 'orange_money' | 'mtn_money' | 'moov_money' | 'wave';
+
+export interface Provider {
+  id: MobileMoneyProvider;
+  name: string;
+  fee: number;
+  minAmount: number;
+  maxAmount: number;
+  logo?: string;
+}
+
+// Payment Types
+export interface PaymentRequest {
+  recipientPhone: string;
+  amount: number;
+  provider: MobileMoneyProvider;
+  description?: string;
+}
+
+export interface PaymentResponse {
+  transactionId: string;
+  status: TransactionStatus;
+  reference: string;
+  amount: number;
+  fee: number;
+  totalAmount: number;
+}
+
+// Notification Types
 export interface Notification {
   id: string;
   userId: string;
-  type: 'transaction' | 'alert' | 'info';
   title: string;
   message: string;
+  type: 'transaction' | 'alert' | 'info';
   read: boolean;
-  createdAt: Date;
   data?: Record<string, any>;
+  createdAt: string;
 }
 
-export interface AuthState {
-  user: User | null;
-  token: string | null;
-  refreshToken: string | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
+// API Response Types
+export interface ApiResponse<T = any> {
+  success: boolean;
+  data?: T;
+  error?: string;
+  message?: string;
 }
 
-export interface TransactionState {
-  transactions: Transaction[];
-  isLoading: boolean;
-  error: string | null;
-  totalCount: number;
-  page: number;
+// Auth Types
+export interface LoginRequest {
+  phone: string;
+  password: string;
 }
 
-export interface AccessibilitySettings {
-  screenReaderEnabled: boolean;
-  highContrastEnabled: boolean;
-  voiceCommandsEnabled: boolean;
-  textSizeMultiplier: number;
-  darkModeEnabled: boolean;
+export interface RegisterRequest {
+  phone: string;
+  firstName: string;
+  lastName: string;
+  email?: string;
+  password: string;
 }
 
-export interface AppSettings {
-  biometricEnabled: boolean;
-  notificationsEnabled: boolean;
-  offlineSyncEnabled: boolean;
-  autoLockTimeout: number; // seconds
-  accessibility: AccessibilitySettings;
+export interface BiometricAuthPayload {
+  phone: string;
+  biometricData: string;
 }
 
-export interface FeeStructure {
-  provider: string;
-  amount: number;
-  feeAmount: number;
-  feePercentage: number;
-  totalAmount: number;
-  netAmount: number;
+// Dashboard Stats
+export interface DashboardStats {
+  totalSent: number;
+  totalReceived: number;
+  totalTransactions: number;
+  thisMonthSent: number;
+  thisMonthReceived: number;
+  recentTransactions: Transaction[];
+}
+
+// Error Types
+export class AppError extends Error {
+  constructor(
+    public code: string,
+    public statusCode: number,
+    message: string,
+  ) {
+    super(message);
+    this.name = 'AppError';
+  }
 }

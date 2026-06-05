@@ -1,52 +1,43 @@
-/**
- * Mobile Money Provider Constants for Côte d'Ivoire
- */
+import { Provider, MobileMoneyProvider } from '@types/index';
 
-export const PROVIDERS = {
-  ORANGE_MONEY: {
-    id: 'orange-money',
+export const MOBILE_MONEY_PROVIDERS: Record<MobileMoneyProvider, Provider> = {
+  orange_money: {
+    id: 'orange_money',
     name: 'Orange Money',
-    code: 'OM',
-    icon: '🟠',
-    color: '#FF6600',
-    phonePrefix: '07|05',
-    apiEndpoint: 'https://api.orangemoney.ci',
-    supportedCountries: ['CI', 'BF', 'ML', 'SN'],
+    fee: 1.5,
+    minAmount: 100,
+    maxAmount: 5000000,
+    logo: 'orange-money',
   },
-  MTN_MONEY: {
-    id: 'mtn-money',
+  mtn_money: {
+    id: 'mtn_money',
     name: 'MTN Money',
-    code: 'MM',
-    icon: '🟡',
-    color: '#FFCC00',
-    phonePrefix: '05',
-    apiEndpoint: 'https://api.mtnglobal.com',
-    supportedCountries: ['CI', 'BF', 'ML'],
+    fee: 1.8,
+    minAmount: 100,
+    maxAmount: 5000000,
+    logo: 'mtn-money',
   },
-  MOOV_MONEY: {
-    id: 'moov-money',
+  moov_money: {
+    id: 'moov_money',
     name: 'Moov Money',
-    code: 'MV',
-    icon: '🔴',
-    color: '#E60012',
-    phonePrefix: '07',
-    apiEndpoint: 'https://api.moovmoney.com',
-    supportedCountries: ['CI', 'BF', 'TG'],
+    fee: 1.7,
+    minAmount: 100,
+    maxAmount: 5000000,
+    logo: 'moov-money',
   },
-  WAVE: {
+  wave: {
     id: 'wave',
     name: 'Wave',
-    code: 'WV',
-    icon: '🌊',
-    color: '#00A3D1',
-    phonePrefix: '07|05|06',
-    apiEndpoint: 'https://api.wave.com',
-    supportedCountries: ['CI', 'SN', 'ML', 'BF', 'TG', 'BJ', 'GW', 'GM'],
+    fee: 1.2,
+    minAmount: 100,
+    maxAmount: 5000000,
+    logo: 'wave',
   },
-} as const;
+};
 
 export const TRANSACTION_STATUS = {
   PENDING: 'pending',
+  PROCESSING: 'processing',
   COMPLETED: 'completed',
   FAILED: 'failed',
   CANCELLED: 'cancelled',
@@ -54,14 +45,8 @@ export const TRANSACTION_STATUS = {
 
 export const KYC_STATUS = {
   PENDING: 'pending',
-  APPROVED: 'approved',
+  VERIFIED: 'verified',
   REJECTED: 'rejected',
-} as const;
-
-export const ACCOUNT_STATUS = {
-  ACTIVE: 'active',
-  SUSPENDED: 'suspended',
-  CLOSED: 'closed',
 } as const;
 
 export const NOTIFICATION_TYPES = {

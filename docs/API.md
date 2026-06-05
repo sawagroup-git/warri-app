@@ -1,231 +1,105 @@
-# API Documentation
-
-Wari App Backend API documentation.
+# Wari App - API Documentation
 
 ## Base URL
-
 ```
 http://localhost:3000/api
 ```
 
 ## Authentication
 
-All protected endpoints require a JWT token in the Authorization header:
-
+All protected endpoints require a JWT token in the `Authorization` header:
 ```
-Authorization: Bearer YOUR_TOKEN
+Authorization: Bearer <token>
 ```
 
 ## Endpoints
 
 ### Authentication
 
-#### Register
+#### POST /auth/login
+Login user with phone and password.
 
-```http
-POST /auth/register
-```
-
-**Request Body:**
+**Request:**
 ```json
 {
-  "phone": "0712345678",
+  "phone": "+22501234567",
+  "password": "SecurePass123"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "uuid",
+    "phone": "+22501234567",
+    "firstName": "John",
+    "lastName": "Doe",
+    "kycStatus": "verified",
+    "token": "jwt-token",
+    "refreshToken": "refresh-token"
+  }
+}
+```
+
+#### POST /auth/register
+Register new user.
+
+**Request:**
+```json
+{
+  "phone": "+22501234567",
   "firstName": "John",
   "lastName": "Doe",
   "email": "john@example.com",
-  "pin": "1234"
-}
-```
-
-**Response (201):**
-```json
-{
-  "success": true,
-  "data": {
-    "user": {
-      "id": "user-123",
-      "phone": "0712345678",
-      "firstName": "John",
-      "lastName": "Doe",
-      "email": "john@example.com",
-      "kycStatus": "pending",
-      "accountStatus": "active"
-    },
-    "token": "eyJhbGc...",
-    "refreshToken": "eyJhbGc..."
-  }
-}
-```
-
-#### Login
-
-```http
-POST /auth/login
-```
-
-**Request Body:**
-```json
-{
-  "phone": "0712345678",
-  "pin": "1234"
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "user": { ... },
-    "token": "eyJhbGc...",
-    "refreshToken": "eyJhbGc..."
-  }
-}
-```
-
-#### Refresh Token
-
-```http
-POST /auth/refresh
-```
-
-**Request Body:**
-```json
-{
-  "refreshToken": "eyJhbGc..."
-}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGc..."
-  }
+  "password": "SecurePass123"
 }
 ```
 
 ### Transactions
 
-#### Create Transaction
+#### GET /transactions
+Get user's transaction history.
 
-```http
-POST /transactions/create
-Authorization: Bearer {token}
-```
+**Query Parameters:**
+- `status`: Filter by transaction status
+- `provider`: Filter by mobile money provider
+- `page`: Page number (default: 1)
+- `limit`: Results per page (default: 20)
 
-**Request Body:**
+#### POST /transactions/send
+Send money to recipient.
+
+**Request:**
 ```json
 {
-  "recipientPhone": "0712345678",
-  "amount": 50000,
-  "provider": "wave",
-  "notes": "Payment for goods"
+  "recipientPhone": "+22501234567",
+  "amount": 10000,
+  "provider": "orange_money",
+  "description": "Payment for goods"
 }
 ```
 
-**Response (201):**
-```json
-{
-  "success": true,
-  "data": {
-    "id": "txn-123",
-    "senderId": "user-123",
-    "recipientPhone": "0712345678",
-    "amount": 50000,
-    "provider": "wave",
-    "fee": 600,
-    "totalAmount": 50600,
-    "status": "pending",
-    "reference": "WAR1234567890",
-    "createdAt": "2026-06-04T19:30:00Z"
-  }
-}
-```
+#### GET /transactions/:id
+Get transaction details.
 
-#### Get Transaction History
-
-```http
-GET /transactions/history?page=1&limit=20
-Authorization: Bearer {token}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": {
-    "transactions": [ ... ],
-    "page": 1,
-    "limit": 20,
-    "total": 50
-  }
-}
-```
-
-#### Get Transaction Details
-
-```http
-GET /transactions/{id}
-Authorization: Bearer {token}
-```
-
-**Response (200):**
-```json
-{
-  "success": true,
-  "data": { ... }
-}
-```
+#### GET /transactions/analytics/dashboard
+Get transaction analytics and statistics.
 
 ## Error Responses
 
-### 400 Bad Request
 ```json
 {
   "success": false,
-  "error": "Missing required fields"
+  "error": "Error message"
 }
 ```
-
-### 401 Unauthorized
-```json
-{
-  "success": false,
-  "error": "Invalid or expired token"
-}
-```
-
-### 429 Too Many Requests
-```json
-{
-  "success": false,
-  "error": "Too many requests. Please try again later."
-}
-```
-
-### 500 Internal Server Error
-```json
-{
-  "success": false,
-  "error": "Internal server error"
-}
-```
-
-## Rate Limiting
-
-- **Window**: 15 minutes
-- **Limit**: 100 requests per IP
-- **Header**: `X-RateLimit-Remaining`
 
 ## Status Codes
 
-- `200` - Success
-- `201` - Created
-- `400` - Bad Request
-- `401` - Unauthorized
-- `403` - Forbidden
-- `404` - Not Found
-- `429` - Too Many Requests
-- `500` - Server Error
+- `200`: Success
+- `400`: Bad Request
+- `401`: Unauthorized
+- `404`: Not Found
+- `500`: Internal Server Error

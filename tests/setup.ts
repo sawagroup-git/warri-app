@@ -1,44 +1,29 @@
-/**
- * Jest setup file
- */
+import '@testing-library/jest-native/extend-expect';
 
 // Mock AsyncStorage
 jest.mock('@react-native-async-storage/async-storage', () => ({
-  getItem: jest.fn(),
   setItem: jest.fn(),
+  getItem: jest.fn(),
   removeItem: jest.fn(),
-  clear: jest.fn(),
+  multiGet: jest.fn(),
+  multiSet: jest.fn(),
 }));
 
-// Mock expo modules
-jest.mock('expo-secure-store', () => ({
-  getItemAsync: jest.fn(),
-  setItemAsync: jest.fn(),
-  deleteItemAsync: jest.fn(),
-}));
-
+// Mock biometric authentication
 jest.mock('expo-local-authentication', () => ({
-  authenticateAsync: jest.fn(),
-  hasHardwareAsync: jest.fn().mockResolvedValue(true),
-  isEnrolledAsync: jest.fn().mockResolvedValue(true),
-  supportedAuthenticationTypesAsync: jest.fn().mockResolvedValue(['fingerprint']),
+  isAvailableAsync: jest.fn().mockResolvedValue(true),
+  authenticate: jest.fn().mockResolvedValue(true),
 }));
 
-// Suppress console errors in tests
-const originalError = console.error;
-beforeAll(() => {
-  console.error = (...args: any[]) => {
-    if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render') ||
-        args[0].includes('Not implemented: HTMLFormElement.prototype.submit'))
-    ) {
-      return;
-    }
-    originalError.call(console, ...args);
-  };
-});
+// Mock notifications
+jest.mock('expo-notifications', () => ({
+  requestPermissionsAsync: jest.fn().mockResolvedValue({}),
+  getLastNotificationResponseAsync: jest.fn().mockResolvedValue(null),
+}));
 
-afterAll(() => {
-  console.error = originalError;
-});
+// Setup global test configuration
+global.console = {
+  ...console,
+  error: jest.fn(),
+  warn: jest.fn(),
+};
