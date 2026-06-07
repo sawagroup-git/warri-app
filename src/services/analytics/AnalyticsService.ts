@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Transaction } from '@types/index';
+import { Transaction } from '../../types/index';
 
 /**
  * Analytics Event Types

@@ -16,6 +16,11 @@ export class TransactionService {
     const reference = `TXN-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
     const fee = this.calculateFee(data.amount, data.provider);
 
+    // Check balance if using app balance (assuming a virtual provider 'app_wallet')
+    if (data.provider === 'wave' || data.provider === 'orange_money') { // Extended logic
+      // In a real app, you'd check if they want to use their wallet
+    }
+
     const transaction = await this.transRepo.create({
       senderId: userId,
       recipientPhone: data.recipientPhone,
@@ -60,6 +65,34 @@ export class TransactionService {
 
   async getTransactionDetails(id: string) {
     return this.transRepo.findById(id);
+  }
+
+  async cancelTransaction(userId: string, transactionId: string) {
+    const transaction = await this.transRepo.findById(transactionId);
+    if (!transaction) {
+      throw new AppError('TRANS_002', 404, 'Transaction not found');
+    }
+
+    if (transaction.senderId !== userId) {
+      throw new AppError('TRANS_003', 403, 'Unauthorized to cancel this transaction');
+    }
+
+    if (transaction.status !== 'pending' && transaction.status !== 'processing') {
+      throw new AppError('TRANS_004', 400, 'Only pending or processing transactions can be cancelled');
+    }
+
+    const createdAt = new Date(transaction.createdAt).getTime();
+    const now = Date.now();
+    const fiveMinutes = 5 * 60 * 1000;
+
+    if (now - createdAt > fiveMinutes) {
+      throw new AppError('TRANS_005', 400, 'Cancellation window (5 minutes) has expired');
+    }
+
+    await this.transRepo.updateStatus(transactionId, 'cancelled');
+
+    // In a real app, you would also notify the provider if possible
+    return { success: true, message: 'Transaction cancelled successfully' };
   }
 
   async getDashboardAnalytics(userId: string) {

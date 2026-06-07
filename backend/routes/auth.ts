@@ -38,6 +38,31 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 /**
+ * POST /api/auth/verify-otp
+ */
+router.post('/verify-otp', async (req: Request, res: Response) => {
+  try {
+    const { phone, code } = req.body;
+    if (!phone || !code) {
+      return res.status(400).json({ success: false, error: 'Phone and code are required' });
+    }
+
+    const result = await authService.verifyOTP(phone, code);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    logger.error('OTP verification error', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
  * POST /api/auth/register
  */
 router.post('/register', async (req: Request, res: Response) => {

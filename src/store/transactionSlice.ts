@@ -1,7 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { Transaction } from '@types/index';
+import { Transaction } from '../types/index';
 
-interface TransactionState {
+export interface TransactionState {
   transactions: Transaction[];
   currentTransaction: Transaction | null;
   isLoading: boolean;

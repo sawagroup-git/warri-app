@@ -122,4 +122,27 @@ router.get('/analytics/dashboard', verifyToken, async (req: Request, res: Respon
   }
 });
 
+/**
+ * POST /api/transactions/:id/cancel
+ */
+router.post('/:id/cancel', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId!;
+
+    const result = await transactionService.cancelTransaction(userId, id);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    logger.error('Fetch analytics error', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
 export default router;

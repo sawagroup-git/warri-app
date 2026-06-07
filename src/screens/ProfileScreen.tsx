@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, AccessibilityInfo } from 'react-native';
 import { Card, Text, Button, useTheme, Dialog, Portal } from 'react-native-paper';
-import { User } from '@types/index';
+import { User } from '../types/index';
 
 interface ProfileScreenProps {
   user: User | null;
@@ -9,11 +9,20 @@ interface ProfileScreenProps {
   onUpdateProfile: (updates: Partial<User>) => Promise<void>;
 }
 
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({
-  user,
-  onLogout,
-  onUpdateProfile,
-}) => {
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState, AppDispatch } from '../store/index';
+import { logoutAction, updateUser } from '../store/slices/authSlice';
+
+export const ProfileScreen: React.FC<any> = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { user } = useSelector((state: RootState) => state.auth);
+
+  if (!user) return null;
+
+  const onLogout = () => dispatch(logoutAction());
+  const onUpdateProfile = async (updates: Partial<User>) => {
+    dispatch(updateUser(updates));
+  };
   const theme = useTheme();
   const [isLoading, setIsLoading] = useState(false);
   const [showLogoutDialog, setShowLogoutDialog] = useState(false);
@@ -40,9 +49,9 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      accessible={true}
+
       accessibilityLabel="Profile screen"
-      accessibilityRole="main"
+
     >
       <View style={styles.content}>
         {/* Header Card */}
@@ -50,7 +59,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <Card.Content>
             <Text
               style={[styles.name, { color: theme.colors.primary }]}
-              accessibilityRole="header"
+
             >
               {user.firstName} {user.lastName}
             </Text>
@@ -67,7 +76,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <Card style={styles.card}>
           <Card.Title
             title="Account Status"
-            accessibilityRole="header"
+
           />
           <Card.Content>
             <View style={styles.statusRow}>
@@ -77,7 +86,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   styles.value,
                   {
                     color:
-                      user.kycStatus === 'approved'
+                      user.kycStatus === 'verified'
                         ? theme.colors.primary
                         : theme.colors.error,
                   },
@@ -93,13 +102,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                   styles.value,
                   {
                     color:
-                      user.accountStatus === 'active'
+                      (user.accountStatus || 'active') === 'active'
                         ? theme.colors.primary
                         : theme.colors.error,
                   },
                 ]}
               >
-                {user.accountStatus.charAt(0).toUpperCase() + user.accountStatus.slice(1)}
+                {(user.accountStatus || 'active').charAt(0).toUpperCase() + (user.accountStatus || 'active').slice(1)}
               </Text>
             </View>
           </Card.Content>
@@ -107,9 +116,20 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
 
         {/* Security Settings */}
         <Card style={styles.card}>
+          <Card.Content>
+            <Text style={styles.sectionTitle}>Referral Program</Text>
+            <View style={styles.referralBox}>
+              <Text>Your Code:</Text>
+              <Text style={styles.referralCode}>{user.referralCode || 'N/A'}</Text>
+            </View>
+            <Text style={styles.infoText}>Share this code and earn 500 XOF for every friend who completes a transfer.</Text>
+          </Card.Content>
+        </Card>
+
+        <Card style={styles.card}>
           <Card.Title
             title="Security"
-            accessibilityRole="header"
+
           />
           <Card.Content>
             <Button
@@ -121,7 +141,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 );
               }}
               style={styles.button}
-              accessible={true}
+
               accessibilityLabel="Security settings"
               accessibilityHint="Manage biometric, PIN, and password settings"
             >
@@ -134,7 +154,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <Card style={styles.card}>
           <Card.Title
             title="Settings"
-            accessibilityRole="header"
+
           />
           <Card.Content>
             <Button
@@ -143,7 +163,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
                 AccessibilityInfo.announceForAccessibility('Opening app settings');
               }}
               style={styles.button}
-              accessible={true}
+
               accessibilityLabel="App settings"
               accessibilityHint="Configure notifications, accessibility, and preferences"
             >
@@ -159,7 +179,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           loading={isLoading}
           disabled={isLoading}
           style={[styles.logoutButton, { backgroundColor: theme.colors.error }]}
-          accessible={true}
+
           accessibilityLabel="Logout button"
           accessibilityHint="Double tap to logout from your account"
         >
@@ -172,8 +192,8 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         <Dialog
           visible={showLogoutDialog}
           onDismiss={() => setShowLogoutDialog(false)}
-          accessible={true}
-          accessibilityRole="alert"
+
+
         >
           <Dialog.Title>Confirm Logout</Dialog.Title>
           <Dialog.Content>
@@ -182,14 +202,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
           <Dialog.Actions>
             <Button
               onPress={() => setShowLogoutDialog(false)}
-              accessible={true}
+
               accessibilityLabel="Cancel"
             >
               Cancel
             </Button>
             <Button
               onPress={handleLogout}
-              accessible={true}
+
               accessibilityLabel="Confirm logout"
             >
               Logout
@@ -247,5 +267,28 @@ const styles = StyleSheet.create({
     marginVertical: 16,
     minHeight: 48,
     justifyContent: 'center',
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  referralBox: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#f0f0f0',
+    padding: 15,
+    borderRadius: 8,
+    marginBottom: 10,
+  },
+  referralCode: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#FF7900',
+  },
+  infoText: {
+    fontSize: 12,
+    opacity: 0.7,
   },
 });

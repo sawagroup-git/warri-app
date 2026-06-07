@@ -1,4 +1,4 @@
-import { Provider, MobileMoneyProvider } from '@types/index';
+import { Provider, MobileMoneyProvider } from '../types/index';
 
 export const MOBILE_MONEY_PROVIDERS: Record<MobileMoneyProvider, Provider> = {
   orange_money: {

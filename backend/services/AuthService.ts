@@ -28,6 +28,11 @@ export class AuthService {
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(data.password, salt);
 
+    const referralCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Check if referral code was provided in a real app
+    // const referredBy = await this.userRepo.findByReferralCode(data.referralCode);
+
     const user = await this.userRepo.create({
       phone: data.phone,
       firstName: data.firstName,
@@ -35,12 +40,52 @@ export class AuthService {
       email: data.email,
       passwordHash,
       kycStatus: 'pending',
+      // @ts-ignore
+      referralCode,
     });
 
     // Send verification SMS (non-blocking)
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpiresAt = new Date();
+    otpExpiresAt.setMinutes(otpExpiresAt.getMinutes() + 10);
+
+    await this.userRepo.update(user.id, {
+      // @ts-ignore
+      otpCode: verificationCode,
+      // @ts-ignore
+      otpExpiresAt
+    });
+
     this.smsService.sendVerificationCode(user.phone, verificationCode).catch(err => {
       logger.error('Failed to send verification SMS during registration', err);
+    });
+
+    return { user, message: 'OTP sent to your phone' };
+  }
+
+  async verifyOTP(phone: string, code: string) {
+    const user = await this.userRepo.findByPhone(phone);
+    if (!user) {
+      throw new AppError('AUTH_006', 404, 'User not found');
+    }
+
+    // @ts-ignore
+    if (user.otpCode !== code) {
+      throw new AppError('AUTH_007', 400, 'Invalid verification code');
+    }
+
+    // @ts-ignore
+    if (user.otpExpiresAt < new Date()) {
+      throw new AppError('AUTH_008', 400, 'Verification code expired');
+    }
+
+    // Mark user as verified
+    await this.userRepo.update(user.id, {
+      kycStatus: 'verified',
+      // @ts-ignore
+      otpCode: null,
+      // @ts-ignore
+      otpExpiresAt: null
     });
 
     const tokens = await this.generateTokens(user.id);

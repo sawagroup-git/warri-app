@@ -1,5 +1,5 @@
 import axios, { AxiosInstance } from 'axios';
-import { PaymentRequest, PaymentResponse } from '@types/index';
+import { PaymentRequest, PaymentResponse } from '../../types/index';
 
 interface OrangeMoneyConfig {
   apiKey: string;

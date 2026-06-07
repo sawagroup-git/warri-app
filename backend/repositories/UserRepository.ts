@@ -46,6 +46,14 @@ export class UserRepository {
   async lockUser(id: string, lockedUntil: Date): Promise<void> {
     await db(this.tableName).where({ id }).update({ lockedUntil });
   }
+
+  async incrementBalance(id: string, amount: number): Promise<void> {
+    await db(this.tableName).where({ id }).increment('balance', amount);
+  }
+
+  async decrementBalance(id: string, amount: number): Promise<void> {
+    await db(this.tableName).where({ id }).decrement('balance', amount);
+  }
 }
 
 export const userRepository = new UserRepository();

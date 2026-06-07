@@ -122,7 +122,7 @@ export class NotificationService {
    */
   onNotificationReceived(
     callback: (notification: Notifications.Notification) => void
-  ): () => void {
+  ): any {
     return Notifications.addNotificationReceivedListener(callback);
   }
 
@@ -131,7 +131,7 @@ export class NotificationService {
    */
   onNotificationResponse(
     callback: (response: Notifications.NotificationResponse) => void
-  ): () => void {
+  ): any {
     return Notifications.addNotificationResponseReceivedListener(callback);
   }
 }
