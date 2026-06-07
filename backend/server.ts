@@ -8,7 +8,9 @@ import authRoutes from './routes/auth';
 import transactionRoutes from './routes/transactions';
 
 // Middleware
-import { validateInput, rateLimit } from './middleware/authentication';
+import { validateInput, rateLimitMiddleware, errorHandler } from './middleware/authentication';
+import morgan from 'morgan';
+import logger from './services/LoggingService';
 
 dotenv.config();
 
@@ -27,8 +29,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Global middleware
+app.use(morgan('combined', { stream: { write: (message) => logger.info(message.trim()) } }));
 app.use(validateInput);
-app.use(rateLimit(900000, 100)); // 15 minutes, 100 requests
+app.use(rateLimitMiddleware);
 
 // Health check endpoint
 app.get('/health', (req: Request, res: Response) => {
@@ -48,13 +51,7 @@ app.use((req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: any, req: Request, res: Response, _next: any) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    success: false,
-    error: err.message || 'Internal server error',
-  });
-});
+app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {

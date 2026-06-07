@@ -6,6 +6,7 @@ export interface User {
   firstName: string;
   lastName: string;
   avatar?: string;
+  passwordHash?: string;
   kycStatus: 'pending' | 'verified' | 'rejected';
   createdAt: string;
   updatedAt: string;

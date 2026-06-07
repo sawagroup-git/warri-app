@@ -5,10 +5,10 @@ const config = {
     client: 'postgresql',
     connection: process.env.DB_URL || 'postgresql://postgres:postgres@localhost:5432/wari_app',
     migrations: {
-      directory: './migrations',
+      directory: '../migrations',
     },
     seeds: {
-      directory: './seeds',
+      directory: '../seeds',
     },
   },
   production: {

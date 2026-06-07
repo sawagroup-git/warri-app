@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
-import { AppError } from '@types/index';
+import { AppError } from '../../src/types/index';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -47,10 +47,11 @@ export const verifyToken = (req: Request, res: Response, next: NextFunction): vo
 export const validateInput = (req: Request, res: Response, next: NextFunction): void => {
   // Check if body is too large or suspicious
   if (req.body && Object.keys(req.body).length > 50) {
-    return res.status(400).json({
+    res.status(400).json({
       success: false,
       error: 'Request body too large',
     });
+    return;
   }
   next();
 };
@@ -84,6 +85,6 @@ export const errorHandler = (err: any, req: Request, res: Response, _next: NextF
 /**
  * Generate JWT token
  */
-export const generateToken = (userId: string, expiresIn: string = '1h'): string => {
+export const generateToken = (userId: string, expiresIn: any = '1h'): string => {
   return jwt.sign({ userId }, JWT_SECRET, { expiresIn });
 };
