@@ -6,7 +6,15 @@ export interface User {
   firstName: string;
   lastName: string;
   avatar?: string;
+  passwordHash?: string;
   kycStatus: 'pending' | 'verified' | 'rejected';
+  accountStatus?: 'active' | 'suspended' | 'blocked' | 'approved';
+  balance?: number;
+  referralCode?: string;
+  referredById?: string;
+  biometricTemplate?: string | null;
+  otpCode?: string | null;
+  otpExpiresAt?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -14,6 +22,38 @@ export interface User {
 export interface AuthUser extends User {
   token: string;
   refreshToken: string;
+}
+
+export interface AuthState {
+  user: User | null;
+  token: string | null;
+  refreshToken: string | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
+
+export interface TransactionState {
+  transactions: Transaction[];
+  isLoading: boolean;
+  error: string | null;
+  totalCount: number;
+  page: number;
+  stats?: DashboardStats | null;
+}
+
+export interface AppSettings {
+  biometricEnabled: boolean;
+  notificationsEnabled: boolean;
+  theme: 'light' | 'dark' | 'system';
+  language: string;
+  autoLockTimeout: number;
+  offlineSyncEnabled: boolean;
+  accessibility: {
+    screenReaderEnabled: boolean;
+    highContrastEnabled: boolean;
+    darkModeEnabled: boolean;
+  };
 }
 
 // Transaction Types

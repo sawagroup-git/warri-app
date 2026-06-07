@@ -48,7 +48,6 @@ export class BiometricAuthService {
 
       const result = await LocalAuthentication.authenticateAsync({
         disableDeviceFallback: false,
-        reason: 'Authenticate to access your Wari account',
       });
 
       return { success: result.success };

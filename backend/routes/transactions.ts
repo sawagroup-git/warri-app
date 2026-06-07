@@ -1,33 +1,36 @@
 import { Router, Request, Response } from 'express';
 import { verifyToken } from '../middleware/authentication';
-import { paymentSchema } from '@constants/validation';
+import { paymentSchema } from '../../src/constants/validation';
+import { transactionService } from '../services/TransactionService';
+import { logger } from '../services/LoggingService';
 
 const router = Router();
 
 /**
  * GET /api/transactions
- * Get user's transaction history
  */
 router.get('/', verifyToken, async (req: Request, res: Response) => {
   try {
     const { status, provider, page = 1, limit = 20 } = req.query;
-    const userId = req.userId;
+    const userId = req.userId!;
 
-    // TODO: Implement transaction fetching
-    // 1. Query transactions from database
-    // 2. Apply filters (status, provider, date range)
-    // 3. Paginate results
-    // 4. Return formatted transaction list
+    const offset = (Number(page) - 1) * Number(limit);
+    const transactions = await transactionService.getHistory(userId, {
+      status: status as string,
+      provider: provider as string,
+      limit: Number(limit),
+      offset,
+    });
 
     res.json({
       success: true,
-      message: 'Transactions list endpoint - implementation pending',
       data: {
-        transactions: [],
-        pagination: { page, limit },
+        transactions,
+        pagination: { page: Number(page), limit: Number(limit) },
       },
     });
   } catch (error: any) {
+    logger.error('Fetch transactions history error', error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -37,19 +40,25 @@ router.get('/', verifyToken, async (req: Request, res: Response) => {
 
 /**
  * GET /api/transactions/:id
- * Get transaction details
  */
 router.get('/:id', verifyToken, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+    const transaction = await transactionService.getTransactionDetails(id);
 
-    // TODO: Fetch transaction details
+    if (!transaction) {
+      return res.status(404).json({
+        success: false,
+        error: 'Transaction not found',
+      });
+    }
+
     res.json({
       success: true,
-      message: 'Transaction details endpoint - implementation pending',
-      data: { id },
+      data: transaction,
     });
   } catch (error: any) {
+    logger.error('Fetch transactions history error', error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -59,19 +68,14 @@ router.get('/:id', verifyToken, async (req: Request, res: Response) => {
 
 /**
  * POST /api/transactions/send
- * Send money to recipient
  */
 router.post('/send', verifyToken, async (req: Request, res: Response) => {
   try {
-    const { recipientPhone, amount, provider, description } = req.body;
-    const userId = req.userId;
+    const userId = req.userId!;
 
-    // Validate input
     const validation = paymentSchema.safeParse({
-      recipientPhone,
-      amount: Number(amount),
-      provider,
-      description,
+      ...req.body,
+      amount: Number(req.body.amount),
     });
 
     if (!validation.success) {
@@ -82,19 +86,35 @@ router.post('/send', verifyToken, async (req: Request, res: Response) => {
       });
     }
 
-    // TODO: Implement transaction creation
-    // 1. Validate sender has sufficient balance
-    // 2. Validate recipient phone exists
-    // 3. Create transaction record
-    // 4. Call mobile money provider API
-    // 5. Update transaction status
-    // 6. Send notifications to sender and recipient
+    const result = await transactionService.sendMoney(userId, req.body);
 
     res.json({
       success: true,
-      message: 'Send money endpoint - implementation pending',
+      data: result,
     });
   } catch (error: any) {
+    logger.error('Send money error', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/transactions/analytics/dashboard
+ */
+router.get('/analytics/dashboard', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const analytics = await transactionService.getDashboardAnalytics(userId);
+
+    res.json({
+      success: true,
+      data: analytics,
+    });
+  } catch (error: any) {
+    logger.error('Fetch analytics error', error);
     res.status(500).json({
       success: false,
       error: error.message,
@@ -103,32 +123,21 @@ router.post('/send', verifyToken, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/transactions/analytics
- * Get transaction analytics and statistics
+ * POST /api/transactions/:id/cancel
  */
-router.get('/analytics/dashboard', verifyToken, async (req: Request, res: Response) => {
+router.post('/:id/cancel', verifyToken, async (req: Request, res: Response) => {
   try {
-    const userId = req.userId;
-    const { dateRange } = req.query;
+    const { id } = req.params;
+    const userId = req.userId!;
 
-    // TODO: Calculate analytics
-    // 1. Total sent/received
-    // 2. Monthly trends
-    // 3. Top recipients
-    // 4. Provider breakdown
-    // 5. Status distribution
+    const result = await transactionService.cancelTransaction(userId, id);
 
     res.json({
       success: true,
-      message: 'Analytics endpoint - implementation pending',
-      data: {
-        totalSent: 0,
-        totalReceived: 0,
-        thisMonthSent: 0,
-        thisMonthReceived: 0,
-      },
+      data: result,
     });
   } catch (error: any) {
+    logger.error('Fetch analytics error', error);
     res.status(500).json({
       success: false,
       error: error.message,

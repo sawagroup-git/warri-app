@@ -6,8 +6,11 @@ import {
   TouchableOpacity,
   AccessibilityInfo,
 } from 'react-native';
-import { Card, Text, useTheme, Chip } from 'react-native-paper';
-import { Transaction } from '@types/index';
+import { Card, Text, useTheme, Chip, Button } from 'react-native-paper';
+import { useDispatch } from 'react-redux';
+import { cancelTransactionAction } from '../../store/slices/transactionSlice';
+import { AppDispatch } from '../../store/index';
+import { Transaction } from '../../types/index';
 
 interface TransactionHistoryProps {
   transactions: Transaction[];
@@ -21,6 +24,14 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   onSelectTransaction,
 }) => {
   const theme = useTheme();
+  const dispatch = useDispatch<AppDispatch>();
+
+  const canCancel = (item: Transaction) => {
+    if (item.status !== 'pending' && item.status !== 'processing') return false;
+    const createdAt = new Date(item.createdAt).getTime();
+    const now = Date.now();
+    return now - createdAt < 5 * 60 * 1000;
+  };
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const formatCurrency = (amount: number): string => {
@@ -63,10 +74,10 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   const renderTransaction = ({ item }: { item: Transaction }) => (
     <TouchableOpacity
       onPress={() => handleSelectTransaction(item)}
-      accessible={true}
+
       accessibilityLabel={`Transaction ${item.reference}`}
       accessibilityHint={`${formatCurrency(item.amount)} sent to ${item.recipientPhone} via ${item.provider}`}
-      accessibilityRole="button"
+
     >
       <Card
         style={[
@@ -80,27 +91,28 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           <View style={styles.transactionHeader}>
             <Text
               style={[styles.reference, { color: theme.colors.onBackground }]}
-              accessibilityRole="text"
+
             >
               Ref: {item.reference}
             </Text>
             <Chip
-              label={item.status.charAt(0).toUpperCase() + item.status.slice(1)}
               style={[styles.statusChip, { backgroundColor: getStatusColor(item.status) }]}
               textStyle={{ color: '#fff' }}
-              accessible={true}
+
               accessibilityLabel={`Status: ${item.status}`}
-            />
+            >
+              {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+            </Chip>
           </View>
 
           <View style={styles.transactionDetails}>
             <View>
-              <Text style={styles.amount} accessibilityRole="text">
+              <Text style={styles.amount} >
                 {formatCurrency(item.amount)}
               </Text>
               <Text
                 style={[styles.recipient, { color: theme.colors.onSurfaceVariant }]}
-                accessibilityRole="text"
+
               >
                 To: {item.recipientPhone}
               </Text>
@@ -108,13 +120,13 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
             <View style={styles.rightColumn}>
               <Text
                 style={[styles.provider, { color: theme.colors.onSurfaceVariant }]}
-                accessibilityRole="text"
+
               >
                 {item.provider}
               </Text>
               <Text
                 style={[styles.date, { color: theme.colors.onSurfaceVariant }]}
-                accessibilityRole="text"
+
               >
                 {new Date(item.createdAt).toLocaleDateString()}
               </Text>
@@ -124,10 +136,21 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           {item.fee > 0 && (
             <Text
               style={[styles.fee, { color: theme.colors.error }]}
-              accessibilityRole="text"
+
             >
               Fee: {formatCurrency(item.fee)} ({((item.fee / item.amount) * 100).toFixed(2)}%)
             </Text>
+          )}
+
+          {canCancel(item) && (
+            <Button
+              mode="outlined"
+              onPress={() => dispatch(cancelTransactionAction(item.id))}
+              style={styles.cancelButton}
+              textColor={theme.colors.error}
+            >
+              Cancel (5m)
+            </Button>
           )}
         </Card.Content>
       </Card>
@@ -137,15 +160,15 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      accessible={true}
+
       accessibilityLabel="Transaction History"
-      accessibilityRole="list"
+
     >
       {transactions.length === 0 ? (
         <View style={styles.emptyState}>
           <Text
             style={[styles.emptyText, { color: theme.colors.onBackground }]}
-            accessibilityRole="text"
+
           >
             No transactions yet
           </Text>
@@ -157,9 +180,9 @@ export const TransactionHistory: React.FC<TransactionHistoryProps> = ({
           keyExtractor={(item) => item.id}
           scrollEnabled={true}
           scrollEventThrottle={16}
-          accessible={true}
+
           accessibilityLabel="Transactions list"
-          accessibilityRole="list"
+
         />
       )}
     </View>
@@ -223,5 +246,8 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
+  },
+  cancelButton: {
+    marginTop: 8,
   },
 });

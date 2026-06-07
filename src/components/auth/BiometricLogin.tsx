@@ -66,10 +66,10 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      accessible={true}
+
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityRole="main"
+
     >
       <View style={styles.header}>
         <Text
@@ -77,7 +77,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             styles.title,
             { color: theme.colors.primary },
           ]}
-          accessibilityRole="header"
+
         >
           Wari
         </Text>
@@ -94,10 +94,10 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             loading={isLoading}
             disabled={isLoading}
             style={styles.button}
-            accessible={true}
+
             accessibilityLabel="Biometric authentication button"
             accessibilityHint="Double tap to authenticate with your fingerprint or face"
-            accessibilityRole="button"
+
           >
             {isLoading ? 'Authenticating...' : 'Use Biometric'}
           </Button>
@@ -105,7 +105,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             mode="text"
             onPress={() => setShowPinFallback(true)}
             style={styles.fallbackButton}
-            accessible={true}
+
             accessibilityLabel="Use PIN instead"
           >
             Use PIN Instead
@@ -124,7 +124,7 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             maxLength={4}
             mode="outlined"
             style={styles.input}
-            accessible={true}
+
             accessibilityLabel="PIN input field"
             accessibilityHint="Enter your 4-digit PIN to authenticate"
           />
@@ -134,9 +134,9 @@ export const BiometricLogin: React.FC<BiometricLoginProps> = ({
             loading={isLoading}
             disabled={isLoading || pin.length !== 4}
             style={styles.button}
-            accessible={true}
+
             accessibilityLabel="Submit PIN button"
-            accessibilityRole="button"
+
           >
             Submit
           </Button>

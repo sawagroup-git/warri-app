@@ -1,19 +1,18 @@
 import { Router, Request, Response } from 'express';
 import { verifyToken } from '../middleware/authentication';
-import { loginSchema, registerSchema } from '@constants/validation';
-import { AppError } from '@types/index';
+import { loginSchema, registerSchema } from '../../src/constants/validation';
+import { authService } from '../services/AuthService';
+import { logger } from '../services/LoggingService';
 
 const router = Router();
 
 /**
  * POST /api/auth/login
- * Login user with phone and password
  */
 router.post('/login', async (req: Request, res: Response) => {
   try {
     const { phone, password } = req.body;
 
-    // Validate input
     const validation = loginSchema.safeParse({ phone, password });
     if (!validation.success) {
       return res.status(400).json({
@@ -23,18 +22,40 @@ router.post('/login', async (req: Request, res: Response) => {
       });
     }
 
-    // TODO: Implement actual authentication logic
-    // 1. Find user by phone
-    // 2. Verify password
-    // 3. Generate JWT tokens
-    // 4. Return user data with tokens
+    const result = await authService.login({ phone, password });
 
     res.json({
       success: true,
-      message: 'Login endpoint - implementation pending',
+      data: result,
     });
   } catch (error: any) {
-    res.status(500).json({
+    logger.error('Login error', error);
+    res.status(error.statusCode || 500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * POST /api/auth/verify-otp
+ */
+router.post('/verify-otp', async (req: Request, res: Response) => {
+  try {
+    const { phone, code } = req.body;
+    if (!phone || !code) {
+      return res.status(400).json({ success: false, error: 'Phone and code are required' });
+    }
+
+    const result = await authService.verifyOTP(phone, code);
+
+    res.json({
+      success: true,
+      data: result,
+    });
+  } catch (error: any) {
+    logger.error('OTP verification error', error);
+    res.status(error.statusCode || 500).json({
       success: false,
       error: error.message,
     });
@@ -43,20 +64,10 @@ router.post('/login', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/register
- * Register new user
  */
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { phone, firstName, lastName, email, password } = req.body;
-
-    // Validate input
-    const validation = registerSchema.safeParse({
-      phone,
-      firstName,
-      lastName,
-      email,
-      password,
-    });
+    const validation = registerSchema.safeParse(req.body);
     if (!validation.success) {
       return res.status(400).json({
         success: false,
@@ -65,19 +76,15 @@ router.post('/register', async (req: Request, res: Response) => {
       });
     }
 
-    // TODO: Implement user registration logic
-    // 1. Check if user already exists
-    // 2. Hash password
-    // 3. Create user in database
-    // 4. Send verification SMS
-    // 5. Generate JWT tokens
+    const result = await authService.register(req.body);
 
-    res.json({
+    res.status(201).json({
       success: true,
-      message: 'Register endpoint - implementation pending',
+      data: result,
     });
   } catch (error: any) {
-    res.status(500).json({
+    logger.error('Registration error', error);
+    res.status(error.statusCode || 500).json({
       success: false,
       error: error.message,
     });
@@ -86,7 +93,6 @@ router.post('/register', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/refresh
- * Refresh access token
  */
 router.post('/refresh', async (req: Request, res: Response) => {
   try {
@@ -99,42 +105,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
       });
     }
 
-    // TODO: Implement token refresh logic
-    // 1. Verify refresh token
-    // 2. Generate new access token
-    // 3. Return new access token
+    const result = await authService.refresh(refreshToken);
 
     res.json({
       success: true,
-      message: 'Refresh endpoint - implementation pending',
+      data: result,
     });
   } catch (error: any) {
-    res.status(500).json({
-      success: false,
-      error: error.message,
-    });
-  }
-});
-
-/**
- * POST /api/auth/biometric
- * Authenticate using biometric data
- */
-router.post('/biometric', async (req: Request, res: Response) => {
-  try {
-    const { phone, biometricData } = req.body;
-
-    // TODO: Implement biometric authentication
-    // 1. Verify biometric data format
-    // 2. Check against stored biometric template
-    // 3. Generate JWT tokens if authenticated
-
-    res.json({
-      success: true,
-      message: 'Biometric auth endpoint - implementation pending',
-    });
-  } catch (error: any) {
-    res.status(500).json({
+    res.status(401).json({
       success: false,
       error: error.message,
     });
@@ -143,14 +121,13 @@ router.post('/biometric', async (req: Request, res: Response) => {
 
 /**
  * POST /api/auth/logout
- * Logout user
  */
-router.post('/logout', verifyToken, async (req: Request, res: Response) => {
+router.post('/logout', async (req: Request, res: Response) => {
   try {
-    // TODO: Implement logout logic
-    // 1. Blacklist token
-    // 2. Clear session
-
+    const { refreshToken } = req.body;
+    if (refreshToken) {
+      await authService.logout(refreshToken);
+    }
     res.json({
       success: true,
       message: 'User logged out successfully',
@@ -164,21 +141,38 @@ router.post('/logout', verifyToken, async (req: Request, res: Response) => {
 });
 
 /**
- * GET /api/auth/profile
- * Get current user profile
+ * POST /api/auth/biometric
  */
-router.get('/profile', verifyToken, async (req: Request, res: Response) => {
+router.post('/biometric', async (req: Request, res: Response) => {
   try {
-    // TODO: Fetch user profile from database
-    const userId = req.userId;
-
+    const { phone, biometricData } = req.body;
+    // Biometric authentication implementation pending
     res.json({
       success: true,
-      message: 'Profile endpoint - implementation pending',
-      data: { userId },
+      message: 'Biometric auth endpoint - implementation pending',
     });
   } catch (error: any) {
     res.status(500).json({
+      success: false,
+      error: error.message,
+    });
+  }
+});
+
+/**
+ * GET /api/auth/profile
+ */
+router.get('/profile', verifyToken, async (req: Request, res: Response) => {
+  try {
+    const userId = req.userId!;
+    const user = await authService.getProfile(userId);
+    res.json({
+      success: true,
+      data: user,
+    });
+  } catch (error: any) {
+    logger.error('Fetch profile error', error);
+    res.status(error.statusCode || 500).json({
       success: false,
       error: error.message,
     });

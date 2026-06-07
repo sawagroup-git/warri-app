@@ -1,38 +1,31 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Card, Text, useTheme, ActivityIndicator, FAB } from 'react-native-paper';
-import { Transaction } from '@types/index';
-import { TransactionHistory } from '@components/dashboard/TransactionHistory';
+import { Transaction } from '../types/index';
+import { TransactionHistory } from '../components/dashboard/TransactionHistory';
+import { useDispatch, useSelector } from 'react-redux';
+import { fetchTransactions, fetchAnalyticsAction } from '../store/slices/transactionSlice';
+import { AppDispatch, RootState } from '../store/index';
+import { VoiceAssistant } from '../components/VoiceAssistant';
 
-interface DashboardScreenProps {
-  transactions: Transaction[];
-  isLoading: boolean;
-  onRefresh: () => Promise<void>;
-  onSendMoney: () => void;
-  onTransactionSelect: (transaction: Transaction) => void;
-}
-
-export const DashboardScreen: React.FC<DashboardScreenProps> = ({
-  transactions,
-  isLoading,
-  onRefresh,
-  onSendMoney,
-  onTransactionSelect,
-}) => {
+export const DashboardScreen: React.FC<any> = ({ navigation }) => {
+  const dispatch = useDispatch<AppDispatch>();
+  const { transactions, isLoading, stats } = useSelector((state: RootState) => state.transactions);
   const theme = useTheme();
   const [refreshing, setRefreshing] = useState(false);
 
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
-      await onRefresh();
+      await dispatch(fetchTransactions({}));
+      await dispatch(fetchAnalyticsAction());
     } finally {
       setRefreshing(false);
     }
   };
 
   // Calculate statistics
-  const totalSent = transactions
+  const totalSent = stats?.totalSent || transactions
     .filter((t) => t.status === 'completed')
     .reduce((sum, t) => sum + t.amount, 0);
 
@@ -40,7 +33,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
     .filter((t) => t.status === 'completed')
     .reduce((sum, t) => sum + t.fee, 0);
 
-  const recentCount = transactions.filter((t) => {
+  const recentCount = stats?.totalTransactions || transactions.filter((t) => {
     const txnDate = new Date(t.createdAt);
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -58,9 +51,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
   return (
     <View
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      accessible={true}
       accessibilityLabel="Dashboard"
-      accessibilityRole="main"
     >
       <ScrollView
         refreshControl={
@@ -71,7 +62,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <View style={styles.section}>
           <Text
             style={[styles.sectionTitle, { color: theme.colors.primary }]}
-            accessibilityRole="header"
           >
             Your Activity
           </Text>
@@ -83,7 +73,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <Text style={styles.statLabel}>Total Sent</Text>
                 <Text
                   style={[styles.statValue, { color: theme.colors.primary }]}
-                  accessible={true}
                   accessibilityLabel={`Total sent: ${formatCurrency(totalSent)}`}
                 >
                   {formatCurrency(totalSent)}
@@ -96,7 +85,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <Text style={styles.statLabel}>Fees Paid</Text>
                 <Text
                   style={[styles.statValue, { color: theme.colors.error }]}
-                  accessible={true}
                   accessibilityLabel={`Fees paid: ${formatCurrency(totalFees)}`}
                 >
                   {formatCurrency(totalFees)}
@@ -109,7 +97,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
                 <Text style={styles.statLabel}>Recent</Text>
                 <Text
                   style={[styles.statValue, { color: theme.colors.primary }]}
-                  accessible={true}
                   accessibilityLabel={`${recentCount} transactions in last 30 days`}
                 >
                   {recentCount}
@@ -123,7 +110,6 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
         <View style={styles.section}>
           <Text
             style={[styles.sectionTitle, { color: theme.colors.primary }]}
-            accessibilityRole="header"
           >
             Recent Transactions
           </Text>
@@ -136,18 +122,24 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
             <TransactionHistory
               transactions={transactions.slice(0, 5)}
               isLoading={isLoading}
-              onSelectTransaction={onTransactionSelect}
+              onSelectTransaction={() => {}}
             />
           )}
         </View>
       </ScrollView>
 
+      <VoiceAssistant onCommand={(cmd) => {
+        if (cmd.startsWith("Envoyer")) {
+          const amount = cmd.split(' ')[1];
+          navigation.navigate('Transfer', { initialAmount: amount });
+        }
+      }} />
+
       {/* FAB - Send Money */}
       <FAB
         icon="send"
-        onPress={onSendMoney}
+        onPress={() => navigation.navigate('Transfer')}
         style={[styles.fab, { backgroundColor: theme.colors.primary }]}
-        accessible={true}
         accessibilityLabel="Send money"
         accessibilityHint="Double tap to send money"
       />

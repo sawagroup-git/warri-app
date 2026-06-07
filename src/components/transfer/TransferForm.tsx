@@ -59,14 +59,14 @@ export const TransferForm: React.FC<TransferFormProps> = ({
   return (
     <ScrollView
       style={[styles.container, { backgroundColor: theme.colors.background }]}
-      accessible={true}
+
       accessibilityLabel="Money Transfer Form"
-      accessibilityRole="main"
+
     >
       <View style={styles.content}>
         <Text
           style={[styles.title, { color: theme.colors.primary }]}
-          accessibilityRole="header"
+
         >
           Send Money
         </Text>
@@ -78,7 +78,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
             <View style={styles.section}>
               <Text
                 style={[styles.label, { color: theme.colors.onBackground }]}
-                accessibilityRole="header"
+
               >
                 Select Provider
               </Text>
@@ -126,7 +126,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 placeholder="07XXXXXXXX"
                 mode="outlined"
                 style={styles.input}
-                accessible={true}
+
                 accessibilityLabel="Recipient phone number"
                 accessibilityHint="Enter 10-digit phone number"
                 error={!!error}
@@ -134,9 +134,9 @@ export const TransferForm: React.FC<TransferFormProps> = ({
               {error && (
                 <Text
                   style={[styles.errorText, { color: theme.colors.error }]}
-                  accessible={true}
+
                   accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
+
                 >
                   {error.message}
                 </Text>
@@ -157,7 +157,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
                 keyboardType="decimal-pad"
                 mode="outlined"
                 style={styles.input}
-                accessible={true}
+
                 accessibilityLabel="Transfer amount"
                 accessibilityHint="Enter amount in West African Franc"
                 error={!!error}
@@ -165,9 +165,9 @@ export const TransferForm: React.FC<TransferFormProps> = ({
               {error && (
                 <Text
                   style={[styles.errorText, { color: theme.colors.error }]}
-                  accessible={true}
+
                   accessibilityLiveRegion="polite"
-                  accessibilityRole="alert"
+
                 >
                   {error.message}
                 </Text>
@@ -187,9 +187,10 @@ export const TransferForm: React.FC<TransferFormProps> = ({
             <View style={styles.feeRow}>
               <Text style={styles.feeLabel}>Fee:</Text>
               <Chip
-                label={`${estimatedFee.toLocaleString()} XOF (${((estimatedFee / amount) * 100).toFixed(2)}%)`}
                 style={styles.feeChip}
-              />
+              >
+                {`${estimatedFee.toLocaleString()} XOF (${((estimatedFee / amount) * 100).toFixed(2)}%)`}
+              </Chip>
             </View>
             <View style={[styles.feeRow, styles.totalRow]}>
               <Text style={styles.totalLabel}>Total:</Text>
@@ -206,7 +207,7 @@ export const TransferForm: React.FC<TransferFormProps> = ({
           loading={isLoading}
           disabled={isLoading}
           style={styles.submitButton}
-          accessible={true}
+
           accessibilityLabel="Submit transfer"
           accessibilityHint="Tap to review and confirm your transfer"
         >

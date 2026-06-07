@@ -10,7 +10,7 @@ import {
   clearError,
 } from '@store/authSlice';
 import { LoginInput, RegisterInput } from '@constants/validation';
-import { ApiResponse, AuthUser } from '@types/index';
+import { ApiResponse, AuthUser } from '../types/index';
 
 /**
  * Custom hook for authentication
